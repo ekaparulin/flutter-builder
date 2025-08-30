@@ -15,6 +15,54 @@ steps:
         docker push $image:$SHORT_SHA
         docker push $image:$BRANCH_NAME
 
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: Untag old images
+    entrypoint: 'bash'
+    waitFor: ['Build image']
+    args:
+      - -c
+      - |
+        set -x
+        image=$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_IMAGE
+        gcloud artifacts docker images list $image \
+          --include-tags \
+          --format="value(DIGEST,TAGS)" \
+        | while IFS=$'\t' read -r digest tags; do
+            # Count how many tags
+            tag_count=$(echo "$tags" | tr ',' '\n' | grep -c .)
+            
+            if [ "$tag_count" -eq 1 ]; then
+              # Extract the single tag
+              tag=$(echo "$tags" | tr ',' '\n')
+              echo "Deleting tag $tag for digest $digest"
+              # Delete the tag
+              gcloud artifacts docker tags delete "${image}:${tag}" --quiet
+            else
+              echo "Keeping multi-tagged digest $digest (tags: $tags)"
+            fi
+        done
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: Delete dangling images
+    entrypoint: 'bash'
+    waitFor: [ 'Untag old images']
+    args:
+      - -c
+      - |
+        set -e
+        image=$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_IMAGE
+        echo "Deleting untagged images in ${image}..."
+        # List all images with no tags
+        gcloud artifacts docker images list "$image" \
+          --include-tags \
+          --format="value(DIGEST,TAGS)" \
+          | while IFS=$'\t' read -r digest tags; do
+              if [ -z "$tags" ]; then
+                echo "Deleting untagged image digest: $digest"
+                gcloud artifacts docker images delete "${image}@${digest}" --quiet
+              else
+                echo "Skipping tagged digest: $digest (tags: $tags)"
+              fi
+            done
 images:
   - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_IMAGE:$SHORT_SHA'
 
