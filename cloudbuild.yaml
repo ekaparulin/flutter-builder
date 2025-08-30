@@ -1,0 +1,22 @@
+substitutions:
+  _REGION: ""
+  _REPO: ""
+  _IMAGE: "flutter-builder"
+
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    id: Build image
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        image=$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_IMAGE
+        docker build . -t $image:$SHORT_SHA  -t $image:$BRANCH_NAME 
+        docker push $image:$SHORT_SHA
+        docker push $image:$BRANCH_NAME
+
+images:
+  - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_IMAGE:$SHORT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
