@@ -11,8 +11,8 @@ WORKDIR /opt
 RUN git clone https://github.com/flutter/flutter.git
 WORKDIR /opt/flutter
 
-# Checkout specific Flutter version (3.22.2)
-RUN git fetch --tags && git checkout 3.22.2
+# Checkout Flutter version 3.35.2
+RUN git fetch --tags && git checkout 3.35.2
 
 # Add flutter to PATH
 ENV PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:${PATH}"
