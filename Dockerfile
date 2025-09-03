@@ -9,6 +9,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install Flutter in /opt
 WORKDIR /opt
 RUN git clone https://github.com/flutter/flutter.git
+
+RUN groupadd flutter -g 1111 \
+    && useradd -u 1111 -r -g flutter -M -d /opt/flutter -s /sbin/nologin -c "Flutter builder" flutter \
+    && chown -R flutter:flutter /opt/flutter
+    
+USER flutter
 WORKDIR /opt/flutter
 
 # Checkout Flutter version 3.35.2
