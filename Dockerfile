@@ -12,7 +12,9 @@ RUN git clone https://github.com/flutter/flutter.git
 
 RUN groupadd flutter -g 1111 \
     && useradd -u 1111 -r -g flutter -M -d /opt/flutter -s /sbin/nologin -c "Flutter builder" flutter \
-    && chown -R flutter:flutter /opt/flutter
+    && chown -R flutter:flutter /opt/flutter \
+    && mkdir /build && chown flutter:flutter /build
+
     
 USER flutter
 WORKDIR /opt/flutter
@@ -27,4 +29,4 @@ ENV PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:${PATH}"
 RUN flutter doctor -v
 
 # Default working directory for apps
-WORKDIR /app
+WORKDIR /build
